@@ -14,21 +14,29 @@
 #pragma comment(lib, "d3dcompiler.lib")
 #pragma comment(lib, "dxguid.lib")
 
-
+// Этот код определяет оконную процедуру WndProc, которая обрабатывает сообщения операционной системы для окна приложения
+// CALLBACK — специальное ключевое слово, указывающее, что функция используется в качестве обработчика событий Windows API.
+// hwnd — идентификатор окна, которому предназначено сообщение.
+// umessage — тип полученного сообщения.
+// wparam — дополнительный параметр, часто содержит код клавиши или флаг.
+// lparam — дополнительный параметр, содержащий информацию о позиции мыши, размере окна и т.д.
 LRESULT CALLBACK WndProc(HWND hwnd, UINT umessage, WPARAM wparam, LPARAM lparam)
 {
 	switch (umessage)
 	{
+	// WM_KEYDOWN вызывается, когда нажимается клавиша на клавиатуре.
 	case WM_KEYDOWN:
 	{
 		// If a key is pressed send it to the input object so it can record that state.
 		std::cout << "Key: " << static_cast<unsigned int>(wparam) << std::endl;
 
+		//  Если нажата клавиша Esc (код 27), вызывается PostQuitMessage(0), что завершает работу приложения.
 		if (static_cast<unsigned int>(wparam) == 27) PostQuitMessage(0);
 		return 0;
 	}
 	default:
 		{
+			// Передача остальных сообщений в стандартный обработчик
 			return DefWindowProc(hwnd, umessage, wparam, lparam);
 		}
 	}
