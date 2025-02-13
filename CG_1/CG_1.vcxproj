@@ -19,12 +19,23 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="DisplayWin32.cpp" />
+    <ClCompile Include="Game.cpp" />
+    <ClCompile Include="GameComponent.cpp" />
+    <ClCompile Include="Help.cpp" />
     <ClCompile Include="MySuper3DApp.cpp" />
+    <ClCompile Include="TriangleComponent.cpp" />
   </ItemGroup>
   <ItemGroup>
     <FxCompile Include="Shaders\MyVeryFirstShader.hlsl">
       <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">VSMain</EntryPointName>
     </FxCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="DisplayWin32.h" />
+    <ClInclude Include="Game.h" />
+    <ClInclude Include="GameComponent.h" />
+    <ClInclude Include="TriangleComponent.h" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>17.0</VCProjectVersion>
