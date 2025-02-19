@@ -6,11 +6,13 @@
 
 #include "DisplayWin32.h"
 #include "GameComponent.h"
+#include "Shader.h"
 
 class Game
 {
 public:
-	CameComponent gameComp = CameComponent();
+	Shader shader;
+	CameComponent gameComp;
 	DisplayWin32 display;
 
 	IDXGISwapChain* swapChain;

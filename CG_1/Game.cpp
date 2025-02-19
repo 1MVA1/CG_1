@@ -70,7 +70,27 @@ void Game::PrepareResources()
 		// Капец, а почему
 	}
 
-	gameComp.Initialize(device);
+	shader.Initialization(device);
+
+	context->RSSetState(shader.rastState);
+
+	std::vector<points_indexes> data;
+	data.push_back({
+	{
+		DirectX::XMFLOAT4(0.5f, 0.5f, 0.5f, 1.0f),
+		DirectX::XMFLOAT4(1.0f, 0.0f, 0.0f, 1.0f),
+		DirectX::XMFLOAT4(-0.5f, -0.5f, 0.5f, 1.0f),
+		DirectX::XMFLOAT4(0.0f, 0.0f, 1.0f, 1.0f),
+		DirectX::XMFLOAT4(0.5f, -0.5f, 0.5f, 1.0f),
+		DirectX::XMFLOAT4(0.0f, 1.0f, 0.0f, 1.0f),
+		DirectX::XMFLOAT4(-0.5f, 0.5f, 0.5f, 1.0f),
+		DirectX::XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f),
+	},
+	{ 0, 1, 2, 1, 0, 3 },
+	32, 0
+	});
+
+	gameComp.Initialize(device, data);
 }
 
 void Game::Update()
@@ -96,6 +116,7 @@ void Game::Update()
 		frameCount = 0;
 	}
 
+	PrepareFrame();
 	Draw();
 }
 
@@ -124,8 +145,6 @@ void Game::PrepareFrame()
 	// Очистка состояния контекста
 	context->ClearState();
 
-	gameComp.Draw(context);
-
 	// Установка сцены
 	D3D11_VIEWPORT viewport = {};
 	viewport.Width = static_cast<float>(display.ClientWidth);
@@ -137,25 +156,18 @@ void Game::PrepareFrame()
 	viewport.MaxDepth = 1.0f;
 
 	context->RSSetViewports(1, &viewport);
-	// Привязывается рендер-таргет (куда рендерится изображение). В данном случае — основной back buffer (rtv).
-	context->OMSetRenderTargets(1, &rendTargView, nullptr);
 }
 
 void Game::Draw()
 {
-	gameComp.Draw(context);
-
 	float color[] = { totalTime, 0.1f, 0.1f, 1.0f };
 
 	// Очищаем BackBuffer
 	context->ClearRenderTargetView(rendTargView, color);
+	// Привязывается рендер-таргет (куда рендерится изображение). В данном случае — основной back buffer (rtv).
+	context->OMSetRenderTargets(1, &rendTargView, nullptr);
 
-	//Рисуем треугольники
-	// Отрисовываются треугольники с использованием индексного буфера.
-	// 6 — количество индексов (два треугольника).
-	// 0 — начальный индекс.
-	// 0 — базовый индекс вершины.
-	context->DrawIndexed(6, 0, 0);
+	gameComp.Draw(context, shader.layout, shader.pixelShader, shader.vertexShader);
 
 	// Сбрасывает рендер-таргеты.
 	context->OMSetRenderTargets(0, nullptr, nullptr);
@@ -174,7 +186,8 @@ void Game::Run()
 	frameCount = 0;
 
 	// Цикл продолжается, пока не будет запрошен выход (isExitRequested == false).
-	while (!isExitRequested) {
+	while (!isExitRequested) 
+	{
 		MessageHandler();
 		Update();
 	}

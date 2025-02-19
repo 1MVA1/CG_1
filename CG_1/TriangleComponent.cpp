@@ -1,107 +1,14 @@
 #include "TriangleComponent.h"
 
-bool TriangleComponent::Initialize(Microsoft::WRL::ComPtr<ID3D11Device> device)
+void TriangleComponent::Initialize(Microsoft::WRL::ComPtr<ID3D11Device> device, std::vector<DirectX::XMFLOAT4> points, 
+	std::vector<int> indexes, UINT stride, UINT offset)
 {
-    // Компиляция вершинного шейдера (VSMain).
-    ID3DBlob* errorVertexCode = nullptr;
+	this->stride = stride;
+	this->offset = offset;
 
-    HRESULT res = D3DCompileFromFile(
-        L"Shaders/MyVeryFirstShader.hlsl",					// Путь к HLSL-файлу
-        nullptr,											// Без макросов
-        nullptr,											// Без дополнительных include
-        "VSMain",											// Имя функции-шейдера
-        "vs_5_0",											// Версия HLSL (вершинный шейдер 5.0)
-        // D3DCOMPILE_DEBUG — включает отладочные данные. D3DCOMPILE_SKIP_OPTIMIZATION — пропускает оптимизацию.
-        D3DCOMPILE_DEBUG | D3DCOMPILE_SKIP_OPTIMIZATION,
-        0,
-        &vertexShaderByteCode,
-        &errorVertexCode									// Ошибки компиляции
-    );
 
-	/*
-	if (FAILED(res)) {
-		// Если шейдер не скомпилировался, выводим ошибку
-		if (errorVertexCode) {
-			char* compileErrors = (char*)(errorVertexCode->GetBufferPointer());
 
-			std::cout << compileErrors << std::endl;
-		}
-		// Если ошибок нет, значит файл шейдера не найден
-		else
-		{
-			MessageBox(display.hWnd, L"MyVeryFirstShader.hlsl", L"Missing Shader File", MB_OK);
-		}
-
-		return 0;
-	}*/
-
-	// Добавление макросов для шейдера.
-	// TEST = 1 — определяет макрос #define TEST 1 в HLSL.
-	// TCOLOR = float4(0.0f, 1.0f, 0.0f, 1.0f) — можно использовать в шейдере как TCOLOR.
-	// Последний nullptr, nullptr обязателен, он означает конец массива.
-	D3D_SHADER_MACRO Shader_Macros[] = { "TEST", "1", "TCOLOR", "float4(0.0f, 1.0f, 0.0f, 1.0f)", nullptr, nullptr };
-
-	// Компиляция пиксельного шейдера
-	ID3DBlob* errorPixelCode;
-
-	res = D3DCompileFromFile(
-		L"Shaders/MyVeryFirstShader.hlsl",
-		Shader_Macros,										// Передача макросов
-		nullptr,											// Без include файлов
-		"PSMain",										    // Точка входа (пиксельный шейдер)
-		"ps_5_0",											// HLSL 5.0
-		D3DCOMPILE_DEBUG | D3DCOMPILE_SKIP_OPTIMIZATION,
-		0,
-		&pixelShaderByteCode,
-		&errorPixelCode
-	);
-
-	// Проверка???
-
-	// Создание вершинного и пиксельного шейдера
-	// GetBufferPointer() — указатель на бинарный код.
-	// GetBufferSize() — размер бинарного кода.
-	res = device->CreateVertexShader( vertexShaderByteCode->GetBufferPointer(), vertexShaderByteCode->GetBufferSize(), nullptr, &vertexShader);
-	res = device->CreatePixelShader( pixelShaderByteCode->GetBufferPointer(), pixelShaderByteCode->GetBufferSize(), nullptr, &pixelShader);
-
-	// Описание формата вершин
-	D3D11_INPUT_ELEMENT_DESC inputElements[] = {
-		D3D11_INPUT_ELEMENT_DESC {
-			"POSITION", 0,
-			DXGI_FORMAT_R32G32B32A32_FLOAT,
-			0, 0,
-			D3D11_INPUT_PER_VERTEX_DATA,
-			0},
-		D3D11_INPUT_ELEMENT_DESC {
-			"COLOR", 0,
-			DXGI_FORMAT_R32G32B32A32_FLOAT,
-			0,
-			// D3D11_APPEND_ALIGNED_ELEMENT автоматически выравнивает цвет после позиции.
-			D3D11_APPEND_ALIGNED_ELEMENT,
-			D3D11_INPUT_PER_VERTEX_DATA,
-			0}
-	};
-
-	// Создание Input Layout
-	// Создаёт объект layout, который связывает буфер вершин с шейдером.
-	// Берёт формат из inputElements.
-	// Использует скомпилированный vertexBC (вершинный шейдер).
-	res = device->CreateInputLayout(
-		// Описание формата вершин и Количество элементов (POSITION, COLOR)
-		inputElements,	2,								
-		vertexShaderByteCode->GetBufferPointer(), vertexShaderByteCode->GetBufferSize(), &layout);
-
-	if (FAILED(res)) {
-		//
-	}
-
-	//  Создание массива вершин
-	points = {
-		DirectX::XMFLOAT4(0.5f, 0.5f, 0.5f, 1.0f),	DirectX::XMFLOAT4(1.0f, 0.0f, 0.0f, 1.0f),
-		DirectX::XMFLOAT4(-0.5f, -0.5f, 0.5f, 1.0f),	DirectX::XMFLOAT4(0.0f, 0.0f, 1.0f, 1.0f),
-		DirectX::XMFLOAT4(0.5f, -0.5f, 0.5f, 1.0f),	DirectX::XMFLOAT4(0.0f, 1.0f, 0.0f, 1.0f),
-		DirectX::XMFLOAT4(-0.5f, 0.5f, 0.5f, 1.0f),	DirectX::XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f),
-	};
+	this->points = points;
 
 	// Описание буфера вершин
 	D3D11_BUFFER_DESC vertexBufDesc = {};
@@ -124,8 +31,10 @@ bool TriangleComponent::Initialize(Microsoft::WRL::ComPtr<ID3D11Device> device)
 	// Создание буфера вершин
 	device->CreateBuffer(&vertexBufDesc, &vertexData, &vertBuff);
 
-	// Массив indeces содержит индексы вершин, которые будут использоваться для отрисовки треугольников
-	indexes = { 0,1,2, 1,0,3 };
+
+
+	this->indexes = indexes;
+
 	D3D11_BUFFER_DESC indexBufDesc = {};
 	// D3D11_USAGE_DEFAULT — стандартный режим, данные будут использоваться GPU без прямого доступа CPU.
 	indexBufDesc.Usage = D3D11_USAGE_DEFAULT;
@@ -145,35 +54,16 @@ bool TriangleComponent::Initialize(Microsoft::WRL::ComPtr<ID3D11Device> device)
 
 	// Создаyние индексного буфера
 	device->CreateBuffer(&indexBufDesc, &indexData, &indBuff);
-
-	// Создание состояния растеризатора
-	CD3D11_RASTERIZER_DESC rastDesc = {};
-	// CullMode = D3D11_CULL_NONE — отключает отсечение невидимых граней, то есть все стороны примитивов будут нарисованы.
-	rastDesc.CullMode = D3D11_CULL_NONE;
-	// FillMode = D3D11_FILL_SOLID — отрисовка треугольников сплошной заливкой (а не каркасом).
-	rastDesc.FillMode = D3D11_FILL_SOLID;
-
-	res = device->CreateRasterizerState(&rastDesc, &rastState);
-
-	// Проверка???
-
-	return true;
 }
 
-void TriangleComponent::Draw(ID3D11DeviceContext* context)
+// ???
+void TriangleComponent::Update()
 {
-	// Настройка вершинного буфера
-	// Эти массивы будут использоваться при привязке вершинного буфера:
-	//		strides — указывает размер одной вершины (в байтах). В данном случае, каждая вершина состоит из двух XMFLOAT4 (позиция + цвет), 
-	//		то есть 32 байта (4 * 4 * 2).
-	//		offsets — смещение (в байтах) от начала буфера (0, так как данные начинаются сразу).
-	UINT strides[] = { 32 };
-	UINT offsets[] = { 0 };
 
-	context->RSSetState(rastState);
+}
 
-	// Шаг 8 - Настройка входных данных
-
+void TriangleComponent::Draw(ID3D11DeviceContext* context, ID3D11InputLayout* layout, ID3D11PixelShader* pixelShader, ID3D11VertexShader* vertexShader)
+{
 	// Привязывается входной макет вершин (IASetInputLayout).
 	context->IASetInputLayout(layout);
 	// Устанавливается примитивная топология (D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST), что означает, что каждые три вершины образуют один треугольник.
@@ -181,8 +71,31 @@ void TriangleComponent::Draw(ID3D11DeviceContext* context)
 	// Привязывается индексный буфер (IASetIndexBuffer).
 	context->IASetIndexBuffer(indBuff, DXGI_FORMAT_R32_UINT, 0);
 	// Привязывается вершинный буфер (IASetVertexBuffers).
-	context->IASetVertexBuffers(0, 1, &vertBuff, strides, offsets);
+	context->IASetVertexBuffers(0, 1, &vertBuff, &stride, &offset);
 
 	context->VSSetShader(vertexShader, nullptr, 0);
 	context->PSSetShader(pixelShader, nullptr, 0);
+
+	//Рисуем треугольники
+	// Отрисовываются треугольники с использованием индексного буфера.
+	// количество индексов (два треугольника).
+	// начальный индекс
+	// базовый индекс вершины
+	context->DrawIndexed(size(indexes), 0, 0);
+}
+
+void TriangleComponent::DestroyResources()
+{
+	points.clear();
+	indexes.clear();
+
+	// Освобождение ресурсов DirectX
+	if (vertBuff) {
+		vertBuff->Release();
+		vertBuff = nullptr;
+	}
+	if (indBuff) {
+		indBuff->Release();
+		indBuff = nullptr;
+	}
 }

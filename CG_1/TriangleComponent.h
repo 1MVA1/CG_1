@@ -10,24 +10,26 @@
 class TriangleComponent 
 {
 public:
-    // объект layout связывает буфер вершин с шейдером
-    ID3D11InputLayout* layout;
-    ID3D11PixelShader* pixelShader;
-    ID3DBlob* pixelShaderByteCode;
-    ID3D11VertexShader* vertexShader;
-    ID3DBlob* vertexShaderByteCode;
-    // Состояния растеризатора
-    ID3D11RasterizerState* rastState;
     // Массив вершин
     std::vector<DirectX::XMFLOAT4> points;
-    // 
+    // Массив indeces содержит индексы вершин, которые будут использоваться для отрисовки треугольников
     std::vector<int> indexes;
+    // Настройка вершинного буфера
+    //	 stride — указывает размер одной вершины (в байтах).
+    //	 offset — смещение (в байтах) от начала буфера.
+    UINT stride;
+    UINT offset;
     // Буфер вершин 
     ID3D11Buffer* vertBuff;
     // Буфер индексов
     ID3D11Buffer* indBuff;
 
-    bool Initialize(Microsoft::WRL::ComPtr<ID3D11Device> device);
+    void Initialize(Microsoft::WRL::ComPtr<ID3D11Device> device, std::vector<DirectX::XMFLOAT4> points, std::vector<int> indexes,
+        UINT stride, UINT offset);
+
+    void Update();
     
-    void Draw(ID3D11DeviceContext* context);
+    void Draw(ID3D11DeviceContext* context, ID3D11InputLayout* layout, ID3D11PixelShader* pixelShader, ID3D11VertexShader* vertexShader);
+
+    void DestroyResources();
 };

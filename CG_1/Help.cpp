@@ -42,7 +42,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT umessage, WPARAM wparam, LPARAM lparam)
 	}
 }
 
-int main()
+int Notmain()
 {
 	// LPCWSTR — это указатель на строку в формате Unicode. (L перед строкой означает, что строка хранится в широких символах)
 	LPCWSTR applicationName = L"My3DApp";
