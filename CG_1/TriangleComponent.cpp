@@ -1,8 +1,11 @@
 #include "TriangleComponent.h"
 
-void TriangleComponent::Initialize(Microsoft::WRL::ComPtr<ID3D11Device> device, std::vector<DirectX::XMFLOAT4> points, 
-	std::vector<int> indexes, UINT stride, UINT offset)
+void TriangleComponent::Initialize(Microsoft::WRL::ComPtr<ID3D11Device> device, const std::vector<DirectX::XMFLOAT4> points, 
+	const std::vector<int> indexes, const UINT stride, const UINT offset)
 {
+	if (vertBuff) vertBuff->Release();
+	if (indBuff) indBuff->Release();
+
 	this->stride = stride;
 	this->offset = offset;
 
@@ -19,8 +22,8 @@ void TriangleComponent::Initialize(Microsoft::WRL::ComPtr<ID3D11Device> device, 
 	vertexBufDesc.CPUAccessFlags = 0;
 	vertexBufDesc.MiscFlags = 0;
 	vertexBufDesc.StructureByteStride = 0;
-	// ByteWidth — размер буфера (всего 8 XMFLOAT4 по 16 байт).
-	vertexBufDesc.ByteWidth = sizeof(DirectX::XMFLOAT4) * std::size(points);
+	// ByteWidth — размер буфера
+	vertexBufDesc.ByteWidth = static_cast<UINT>(sizeof(DirectX::XMFLOAT4) * points.size());
 
 	// Заполнение буфера данными
 	D3D11_SUBRESOURCE_DATA vertexData = {};
@@ -44,7 +47,7 @@ void TriangleComponent::Initialize(Microsoft::WRL::ComPtr<ID3D11Device> device, 
 	indexBufDesc.MiscFlags = 0;
 	indexBufDesc.StructureByteStride = 0;
 	// Размер буфера в байтах.
-	indexBufDesc.ByteWidth = sizeof(int) * std::size(indexes);
+	indexBufDesc.ByteWidth = static_cast<UINT>(sizeof(int) * indexes.size());
 
 	// Структура D3D11_SUBRESOURCE_DATA содержит указатель pSysMem на массив индексов, который будет загружен в буфер.
 	D3D11_SUBRESOURCE_DATA indexData = {};
@@ -81,7 +84,7 @@ void TriangleComponent::Draw(ID3D11DeviceContext* context, ID3D11InputLayout* la
 	// количество индексов (два треугольника).
 	// начальный индекс
 	// базовый индекс вершины
-	context->DrawIndexed(size(indexes), 0, 0);
+	context->DrawIndexed(static_cast<UINT>(indexes.size()), 0, 0);
 }
 
 void TriangleComponent::DestroyResources()

@@ -1,7 +1,7 @@
 #include "Game.h"
 
 void Game::Initialization(LPCWSTR applicationName, int width, int height) {
-	display = DisplayWin32(L"My3DApp", 800, 800); 
+	display.Initialization(applicationName, width, height);
 }
 
 void Game::CreateBackBuff()
@@ -51,26 +51,31 @@ void Game::CreateBackBuff()
 		&context
 	);
 
-	if (FAILED(res))
-	{
-		// Капец, а почему
+	if (FAILED(res)) {
+		// Лог ошибки
+		return;
 	}
 
 	// swapChain->GetBuffer(0, ...) получает задний буфер, который используется как основная поверхность для рендеринга.
 	// __uuidof(ID3D11Texture2D) говорит компилятору, что мы ожидаем 2D-текстуру.
 	res = swapChain->GetBuffer(0, __uuidof(ID3D11Texture2D), (void**)&backBuff);	// __uuidof(ID3D11Texture2D)
+
+	if (FAILED(res)) {
+		// Лог ошибки
+		return;
+	}
 }
 
 void Game::PrepareResources()
 {
 	HRESULT res = device->CreateRenderTargetView(backBuff, nullptr, &rendTargView);
 
-	if (FAILED(res))
-	{
-		// Капец, а почему
+	if (FAILED(res)) {
+		// Лог ошибки
+		return;
 	}
 
-	shader.Initialization(device);
+	shader.Initialization(device, display);
 
 	context->RSSetState(shader.rastState);
 
@@ -143,7 +148,7 @@ void Game::MessageHandler()
 void Game::PrepareFrame()
 {
 	// Очистка состояния контекста
-	context->ClearState();
+	//context->ClearState();
 
 	// Установка сцены
 	D3D11_VIEWPORT viewport = {};
@@ -191,4 +196,36 @@ void Game::Run()
 		MessageHandler();
 		Update();
 	}
+
+	DestroyResources();
+}
+
+void Game::DestroyResources()
+{
+	if (rendTargView) 
+	{
+		rendTargView->Release();
+		rendTargView = nullptr;
+	}
+
+	if (backBuff) 
+	{
+		backBuff->Release();
+		backBuff = nullptr;
+	}
+
+	if (swapChain) 
+	{
+		swapChain->Release();
+		swapChain = nullptr;
+	}
+
+	if (context) 
+	{
+		context->Release();
+		context = nullptr;
+	}
+
+	gameComp.DestroyResources();
+	shader.DestroyResources();
 }

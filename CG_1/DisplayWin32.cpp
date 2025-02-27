@@ -1,5 +1,4 @@
 ﻿#include "DisplayWin32.h"
-#include <iostream>
 
 LRESULT CALLBACK DisplayWin32::WndProc(HWND hwnd, UINT umessage, WPARAM wparam, LPARAM lparam)
 {
@@ -8,11 +7,12 @@ LRESULT CALLBACK DisplayWin32::WndProc(HWND hwnd, UINT umessage, WPARAM wparam, 
 		// WM_KEYDOWN вызывается, когда нажимается клавиша на клавиатуре.
 	case WM_KEYDOWN:
 	{
-		// If a key is pressed send it to the input object so it can record that state.
+		// Если нажата клавиша, отправьте ее объекту ввода, чтобы он мог записать это состояние
 		std::cout << "Key: " << static_cast<unsigned int>(wparam) << std::endl;
 
 		//  Если нажата клавиша Esc (код 27), вызывается PostQuitMessage(0), что завершает работу приложения.
 		if (static_cast<unsigned int>(wparam) == 27) PostQuitMessage(0);
+
 		return 0;
 	}
 	default:
@@ -23,8 +23,13 @@ LRESULT CALLBACK DisplayWin32::WndProc(HWND hwnd, UINT umessage, WPARAM wparam, 
 	}
 }
 
-DisplayWin32::DisplayWin32(LPCWSTR applicationName, int width, int height) : ClientWidth(width), ClientHeight(height)
+void DisplayWin32::Initialization(LPCWSTR applicationName, int width, int height)
 {
+	ClientWidth = width;
+	ClientHeight = height;
+
+
+
     // GetModuleHandle(nullptr); — получает экземпляр текущего процесса, который нужен при регистрации окна.
     hInstance = GetModuleHandle(nullptr);
     

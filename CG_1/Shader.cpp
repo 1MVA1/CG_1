@@ -1,10 +1,10 @@
 #include "Shader.h"
 
-void Shader::Initialization(Microsoft::WRL::ComPtr<ID3D11Device> device)
+void Shader::Initialization(Microsoft::WRL::ComPtr<ID3D11Device> device, DisplayWin32& display)
 {
-	// Компиляция вершинного шейдера (VSMain).
-	ID3DBlob* errorVertexCode = nullptr;
+	ID3DBlob* errorCode = nullptr;
 
+	// Компиляция вершинного шейдера (VSMain).
 	HRESULT res = D3DCompileFromFile(
 		L"Shaders/MyVeryFirstShader.hlsl",					// Путь к HLSL-файлу
 		nullptr,											// Без макросов
@@ -15,14 +15,14 @@ void Shader::Initialization(Microsoft::WRL::ComPtr<ID3D11Device> device)
 		D3DCOMPILE_DEBUG | D3DCOMPILE_SKIP_OPTIMIZATION,
 		0,
 		&vertexShaderByteCode,
-		&errorVertexCode									// Ошибки компиляции
+		&errorCode									// Ошибки компиляции
 	);
 
-	/*
-	if (FAILED(res)) {
+	if (FAILED(res)) 
+	{
 		// Если шейдер не скомпилировался, выводим ошибку
-		if (errorVertexCode) {
-			char* compileErrors = (char*)(errorVertexCode->GetBufferPointer());
+		if (errorCode) {
+			char* compileErrors = (char*)(errorCode->GetBufferPointer());
 
 			std::cout << compileErrors << std::endl;
 		}
@@ -32,8 +32,10 @@ void Shader::Initialization(Microsoft::WRL::ComPtr<ID3D11Device> device)
 			MessageBox(display.hWnd, L"MyVeryFirstShader.hlsl", L"Missing Shader File", MB_OK);
 		}
 
-		return 0;
-	}*/
+		return;
+	}
+
+	errorCode = nullptr;
 
 	// Добавление макросов для шейдера.
 	// TEST = 1 — определяет макрос #define TEST 1 в HLSL.
@@ -42,8 +44,6 @@ void Shader::Initialization(Microsoft::WRL::ComPtr<ID3D11Device> device)
 	D3D_SHADER_MACRO Shader_Macros[] = { "TEST", "1", "TCOLOR", "float4(0.0f, 1.0f, 0.0f, 1.0f)", nullptr, nullptr };
 
 	// Компиляция пиксельного шейдера
-	ID3DBlob* errorPixelCode;
-
 	res = D3DCompileFromFile(
 		L"Shaders/MyVeryFirstShader.hlsl",
 		Shader_Macros,										// Передача макросов
@@ -53,16 +53,42 @@ void Shader::Initialization(Microsoft::WRL::ComPtr<ID3D11Device> device)
 		D3DCOMPILE_DEBUG | D3DCOMPILE_SKIP_OPTIMIZATION,
 		0,
 		&pixelShaderByteCode,
-		&errorPixelCode
+		&errorCode
 	);
 
-	// Проверка???
+	if (FAILED(res))
+	{
+		if (errorCode) {
+			char* compileErrors = (char*)(errorCode->GetBufferPointer());
+
+			std::cout << compileErrors << std::endl;
+		}
+	}
 
 	// Создание вершинного и пиксельного шейдера
 	// GetBufferPointer() — указатель на бинарный код.
 	// GetBufferSize() — размер бинарного кода.
 	res = device->CreateVertexShader(vertexShaderByteCode->GetBufferPointer(), vertexShaderByteCode->GetBufferSize(), nullptr, &vertexShader);
+
+	if (FAILED(res))
+	{
+		if (errorCode) {
+			char* compileErrors = (char*)(errorCode->GetBufferPointer());
+
+			std::cout << compileErrors << std::endl;
+		}
+	}
+
 	res = device->CreatePixelShader(pixelShaderByteCode->GetBufferPointer(), pixelShaderByteCode->GetBufferSize(), nullptr, &pixelShader);
+
+	if (FAILED(res))
+	{
+		if (errorCode) {
+			char* compileErrors = (char*)(errorCode->GetBufferPointer());
+
+			std::cout << compileErrors << std::endl;
+		}
+	}
 
 	// Описание формата вершин
 	D3D11_INPUT_ELEMENT_DESC inputElements[] = {
@@ -91,8 +117,13 @@ void Shader::Initialization(Microsoft::WRL::ComPtr<ID3D11Device> device)
 		inputElements, 2,
 		vertexShaderByteCode->GetBufferPointer(), vertexShaderByteCode->GetBufferSize(), &layout);
 
-	if (FAILED(res)) {
-		//
+	if (FAILED(res))
+	{
+		if (errorCode) {
+			char* compileErrors = (char*)(errorCode->GetBufferPointer());
+
+			std::cout << compileErrors << std::endl;
+		}
 	}
 
 	// Создание состояния растеризатора
@@ -104,5 +135,51 @@ void Shader::Initialization(Microsoft::WRL::ComPtr<ID3D11Device> device)
 
 	res = device->CreateRasterizerState(&rastDesc, &rastState);
 
-	// Проверка???
+	if (FAILED(res))
+	{
+		if (errorCode) {
+			char* compileErrors = (char*)(errorCode->GetBufferPointer());
+
+			std::cout << compileErrors << std::endl;
+		}
+	}
+}
+
+void Shader::DestroyResources()
+{
+	if (pixelShader) 
+	{
+		pixelShader->Release();
+		pixelShader = nullptr;
+	}
+
+	if (vertexShader) 
+	{
+		vertexShader->Release();
+		vertexShader = nullptr;
+	}
+
+	if (pixelShaderByteCode) 
+	{
+		pixelShaderByteCode->Release();
+		pixelShaderByteCode = nullptr;
+	}
+
+	if (vertexShaderByteCode) 
+	{
+		vertexShaderByteCode->Release();
+		vertexShaderByteCode = nullptr;
+	}
+
+	if (layout) 
+	{
+		layout->Release();
+		layout = nullptr;
+	}
+
+	if (rastState) 
+	{
+		rastState->Release();
+		rastState = nullptr;
+	}
 }

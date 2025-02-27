@@ -18,7 +18,7 @@
 
 int main()
 {
-	Game game = Game();
+	Game game;
 	game.Initialization(L"My3DApp", 800, 800);
 	game.CreateBackBuff();
 	game.PrepareResources();
